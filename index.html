@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat con DeepSeek-R1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* Estilos personalizados */
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(to bottom right, #e6f2ff, #cce5ff);
+        }
+        .message-content p {
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+        }
+        .message-content h1, .message-content h2, .message-content h3 {
+            font-weight: bold;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .message-content h1 {
+            font-size: 1.875rem;
+            border-bottom: 2px solid #b3d7ff;
+            padding-bottom: 0.5rem;
+            color: #1a56db;
+        }
+        .message-content h2 {
+            font-size: 1.5rem;
+            color: #1e429f;
+        }
+        .message-content h3 {
+            font-size: 1.25rem;
+            color: #2563eb;
+        }
+        .message-content ul, .message-content ol {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .message-content ul {
+            list-style-type: disc;
+        }
+        .message-content ol {
+            list-style-type: decimal;
+        }
+        .message-content li {
+            margin-bottom: 0.5rem;
+        }
+        .message-content pre {
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            background: #1e293b;
+        }
+        .message-content code {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+        .message-content blockquote {
+            border-left: 4px solid #93c5fd;
+            padding-left: 1rem;
+            color: #1e40af;
+            margin: 1rem 0;
+            background-color: #dbeafe;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: bounce 1.5s infinite;
+        }
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #dbeafe;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #93c5fd;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #60a5fa;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header fijo en la parte superior -->
+    <header class="flex items-center justify-between p-4 bg-white shadow-md sticky top-0 z-10">
+        <div class="flex items-center space-x-3">
+            <div class="bg-blue-500 rounded-full w-12 h-12 flex items-center justify-center">
+                <i class="fas fa-robot text-white text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Chat con DeepSeek-R1</h1>
+                <p class="text-sm text-blue-600">Modelo avanzado de inteligencia artificial</p>
+            </div>
+        </div>
+        <div class="flex space-x-2">
+            <button id="clear-chat" class="p-2 bg-blue-100 hover:bg-blue-200 rounded-full transition">
+                <i class="fas fa-trash text-blue-700"></i>
+            </button>
+            <button class="p-2 bg-blue-100 hover:bg-blue-200 rounded-full transition">
+                <i class="fas fa-cog text-blue-700"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Área de mensajes que se expande -->
+    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
+        <!-- Los mensajes se cargarán aquí, incluyendo el de bienvenida -->
+    </div>
+
+    <!-- Input fijo en la parte inferior -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-blue-200 p-4 shadow-lg">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex items-end space-x-3">
+                <button class="p-2 bg-blue-100 hover:bg-blue-200 rounded-full transition">
+                    <i class="fas fa-plus text-blue-700"></i>
+                </button>
+                <div class="flex-1 relative">
+                    <textarea 
+                        id="user-input" 
+                        rows="1"
+                        placeholder="Escribe tu mensaje..."
+                        class="w-full border border-blue-300 rounded-2xl py-3 px-4 pr-10 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    ></textarea>
+                    <button class="absolute right-3 bottom-3 p-1 text-blue-500 hover:text-blue-700">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                </div>
+                <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white rounded-full w-12 h-12 flex items-center justify-center transition">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+            <div class="mt-2 text-xs text-blue-600 flex items-center">
+                <i class="fas fa-info-circle mr-1"></i>
+                DeepSeek-R1 puede cometer errores. Verifica la información importante.
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="py-2 text-center text-sm text-blue-600 bg-white border-t border-blue-200">
+        <div class="max-w-4xl mx-auto">
+            <p>Conectado a <span class="font-semibold">DeepSeek-R1</span> vía API de Ollama</p>
+            <div class="mt-1 flex items-center justify-center space-x-2">
+                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                <span>Modelo disponible</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chat-messages');
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            const clearChatBtn = document.getElementById('clear-chat');
+            
+            // Configuración de la API de Ollama
+            const OLLAMA_API_URL = 'http://localhost:11434/api/chat';
+            const MODEL_NAME = 'deepseek-r1';
+            
+            // Cargar historial del localStorage
+            let conversationHistory = JSON.parse(localStorage.getItem('deepseek-chat')) || [];
+            
+            // Función para guardar el historial en localStorage
+            function saveConversation() {
+                localStorage.setItem('deepseek-chat', JSON.stringify(conversationHistory));
+            }
+            
+            // Función para renderizar los mensajes guardados
+            function renderMessages() {
+                chatMessages.innerHTML = '';
+                conversationHistory.forEach(msg => {
+                    addMessage(msg.content, msg.role === 'user', false);
+                });
+            }
+            
+            // Ajustar altura del textarea automáticamente
+            userInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+            });
+            
+            // Función para añadir un mensaje al chat con formateo avanzado
+            function addMessage(content, isUser, save = true) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `flex items-start space-x-3 ${isUser ? 'justify-end' : ''} mb-4 fade-in`;
+                
+                if (isUser) {
+                    messageDiv.innerHTML = `
+                        <div class="bg-blue-100 rounded-2xl rounded-tr-none px-4 py-3 max-w-[80%]">
+                            <div class="message-content">${formatText(content)}</div>
+                        </div>
+                        <div class="bg-blue-500 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-user text-white"></i>
+                        </div>
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="bg-blue-100 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-blue-600"></i>
+                        </div>
+                        <div class="bg-white border border-blue-200 rounded-2xl rounded-tl-none px-4 py-3 max-w-[80%]">
+                            <div class="message-content">${formatText(content)}</div>
+                        </div>
+                    `;
+                }
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Resaltar el código
+                setTimeout(() => {
+                    document.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                }, 10);
+                
+                // Guardar en el historial si es un mensaje nuevo
+                if (save) {
+                    conversationHistory.push({
+                        role: isUser ? 'user' : 'assistant',
+                        content: content
+                    });
+                    saveConversation();
+                }
+            }
+            
+            // Función para formatear texto con Marked
+            function formatText(text) {
+                return marked.parse(text);
+            }
+            
+            // Función para mostrar el indicador de "escribiendo"
+            function showTypingIndicator() {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'flex items-start space-x-3 mb-4 fade-in';
+                messageDiv.innerHTML = `
+                    <div class="bg-blue-100 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-robot text-blue-600"></i>
+                    </div>
+                    <div class="bg-white border border-blue-200 rounded-2xl rounded-tl-none px-4 py-3 max-w-[80%]">
+                        <div class="typing-indicator flex space-x-1">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                `;
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                return messageDiv;
+            }
+            
+            // Función para enviar un mensaje al modelo
+            async function sendMessage() {
+                const message = userInput.value.trim();
+                if (!message) return;
+                
+                // Añadir mensaje del usuario al chat
+                addMessage(message, true);
+                userInput.value = '';
+                userInput.style.height = 'auto';
+                sendButton.disabled = true;
+                
+                // Mostrar indicador de que el bot está escribiendo
+                const typingIndicator = showTypingIndicator();
+                
+                try {
+                    // Preparar la petición a la API de Ollama
+                    const requestData = {
+                        model: MODEL_NAME,
+                        messages: [
+                            ...conversationHistory.filter(msg => msg.role === 'user' || msg.role === 'assistant').map(msg => ({
+                                role: msg.role,
+                                content: msg.content
+                            })),
+                            { role: 'user', content: message }
+                        ],
+                        stream: false
+                    };
+                    
+                    // Hacer la petición
+                    const response = await fetch(OLLAMA_API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Error en la petición: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Ocultar indicador y mostrar respuesta
+                    typingIndicator.remove();
+                    addMessage(data.message.content, false);
+                    
+                } catch (error) {
+                    typingIndicator.remove();
+                    addMessage(`Error: ${error.message}`, false);
+                    console.error('Error al comunicarse con Ollama:', error);
+                } finally {
+                    sendButton.disabled = false;
+                    userInput.focus();
+                }
+            }
+            
+            // Limpiar el chat
+            function clearChat() {
+                conversationHistory = [];
+                saveConversation();
+                renderMessages();
+                
+                // Añadir mensaje de bienvenida
+                addMessage("¡Hola! Soy DeepSeek-R1. ¿En qué puedo ayudarte hoy?", false);
+            }
+            
+            // Event listeners
+            sendButton.addEventListener('click', sendMessage);
+            
+            userInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            clearChatBtn.addEventListener('click', clearChat);
+            
+            // Inicializar: cargar historial o mostrar mensaje de bienvenida
+            if (conversationHistory.length > 0) {
+                renderMessages();
+            } else {
+                addMessage("¡Hola! Soy DeepSeek-R1. ¿En qué puedo ayudarte hoy?", false);
+            }
+            
+            // Enfocar el input al cargar
+            userInput.focus();
+        });
+    </script>
+</body>
+</html>
