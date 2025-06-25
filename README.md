@@ -17,8 +17,9 @@ Interfaz web de chat que permite interactuar con el modelo de inteligencia artif
 
 1. Tener [Ollama](https://ollama.com/) instalado y funcionando
 2. Descargar el modelo DeepSeek-R1:
-   ```bash
-   ollama pull deepseek-r1```}
+```bash
+   ollama pull deepseek-r1
+```
 
 ## Uso
 
